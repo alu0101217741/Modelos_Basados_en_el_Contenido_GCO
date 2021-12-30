@@ -1,0 +1,47 @@
+body {
+    background: #0097a7;
+    font-size: large;
+}
+
+body h3 {
+    font-weight: bold;
+}
+
+body h4 {
+    font-weight: bold;
+}
+
+body h5 {
+    margin-top: 1.5em;
+    font-weight: bold;
+}
+
+label {
+    font-size: large !important;
+    font-weight: bold;
+}
+
+.input-field {
+    margin-top: 0.1px !important;
+}
+
+body button {
+    margin-top: 1em;
+    margin-bottom: 1em;
+    font-weight: bold;
+}
+
+body p {
+    margin-bottom: 1.5em;
+}
+
+#index {
+    font-weight: bold;
+}
+
+#table-scroll {
+    overflow:scroll;
+    max-height: 600px;
+    max-width: 100%;
+    position:relative; 
+}

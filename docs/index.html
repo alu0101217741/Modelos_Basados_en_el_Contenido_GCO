@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Modelos basados en el Contenido</title>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <!--Hoja de estilo CSS-->
+        <link rel="stylesheet" href="./css/style.css">
+
+        <!-- Estilo CSS de Materialize compilado y minimizado. -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    </head>
+    <body>
+        <div class="container">
+            <div class="row card white">
+                <div class="col s12">
+                    <h3 class="center">Sistema de recomendación</h3>
+                    <h4 class="center">Modelos basados en el Contenido</h4>
+                </div>
+                <div class="col s10 offset-s1">
+                    <p>Para utilizar el sistema de recomendación siguiendo el modelo basado en el contenido debe introducir un archivo de texto:</p>
+                </div>
+                <div class="col s8 offset-s2">
+                    <form>
+                        <div class="row">
+                            <div class="col s12">
+                                <label class="black-text" for="file-input">Seleccione el archivo correspondiente:</label>
+                                <input type="file" accept=".txt" id="file-input">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="col s12 center">
+                    <button id="read_button" class="btn waves-effect waves-light cyan darken-2" type="submit" name="action">ANALIZAR CONTENIDO</button>
+                </div>
+                <div id="result" class="col s12 center"></div>
+            </div>
+        </div>
+
+        <!-- JavaScript de Materialize compilado y minimizado. -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+
+        <!-- Código JavaScript para la clase Recommender -->
+        <script type="text/javascript" src="src/recommender.js"></script>
+
+        <!-- Código JavaScript para gestionar el formulario y mostrar los resultados. -->
+        <script type="text/javascript" src="src/form.js"></script>
+    </body>
+</html>

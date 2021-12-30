@@ -27,6 +27,68 @@ El sistema de recomendación se encuentra dentro de **docs** que incluye los sig
 
   * **recommender.js**: Se define la clase **Recommender** que implementa el sistema de recomendación siguiendo el modelo basados en el contenido, de forma que calcula la frecuencia de las palabras en cada uno de los documentos (valores TF), los valores IDF de las palabras de cada documento, el valor TF - IDF para cada una de las palabras y la similaridad coseno entre cada par de documentos.
 
+## 3. Descripción del código desarrollado
+A continuación, se describe el contenido de cada uno de los ficheros que forman el sistema de recomendación.
 
+### 3.1. index.html
+En primer lugar, el fichero **index.html** contiene el formulario donde el usuario puede subir el archivo de texto que desea analizar. Como ya se ha comentado anteriormente para aportar una adecuada presentación se ha empleado Materialize y la hoja de estilo style.css.
 
+### 3.2. form.js
+
+Permite obtener el fichero que ha introducido el usuario a través del formulario, lo que hace posible almacenar su contenido en una variable y procesarlo para convertirlo en una matriz que facilite su análisis en la clase Recommender. Para realizar esta interacción se ha empleado el evento `click` sobre el botón del formulario que tiene el id `read_button`.
+
+```js
+document.getElementById('read_button').addEventListener('click', function() {
+```
+De esta forma cuando se pulse el botón se comprueba que el usuario ha introducido un fichero, tras ello se procesa, para lo que se toma el nombre del archivo y se crea un objeto de la clase `FileReader()`. Luego se lee como un fichero de texto mediante `reader.readAsText(file);` y se emplean dos nuevos eventos sobre el objeto `reader`. El primero es `load` que se ejecuta cuando  ha finalizado correctamente la lectura del fichero. El otro es `error` que se ejecuta si ha ocurrido algún error en la lectura del fichero para informar al usuario.
+
+Dentro del evento `load` se obtienen los datos leídos del fichero y se tranforman para crear una matriz `documents` donde cada fila representa un documento y contiene las palabras que lo forman.
+
+Tras ello, se crea el objeto `recommender` de la clase `Recommender` pasándole la matriz que se ha creado a partir del archivo de texto.
+
+```js
+const recommender = new Recommender(documents);
+ ```
+ 
+ Por último, se llaman a los métodos de la clase `Recommender` para obtener los resultados y se muestran en la página web empleando las funciones `show_result`, `show_table_similarity` y `show_table` que incorporan código HTML.
+ 
+  ### 3.3. recommender.js
+  
+ Este fichero incluye la clase `Recommender` que implementa un recomendador siguiendo el modelo basado en el contenido.
+ 
+  ### Constructor
+  El constructor de la clase es el que se muestra a continuación:
+  
+  ```js
+  constructor(documents) {
+        this.documents = this.duplicate_words(documents);
+        this.tf = this.calculate_tf(documents);
+        this.idf = this.calculate_idf();
+        this.tf_idf = this.calculate_tf_idf();
+        this.cosine_similarity = this.cosine_similarity();
+    }
+  ```
+  
+  Con la matriz de documentos que se recibe se inicializan algunos de los atributos de la clase que son los siguientes: 
+
+* `this.documents`: matriz que contiene en cada una de sus filas un documento que no tiene palabras repetidas, ya que han sido eliminadas empleando el método `duplicate_words(documents)`.
+* `this.tf`: matriz que almacena la frecuencia de las palabras en cada uno de los documentos, esto es posible gracias al método `calculate_tf(documents)`.
+* `this.idf`: matriz donde se guardan los valores IDF de las palabras de los documentos, para ello se emplea el método `calculate_idf()`.
+* `this.cosine_similarity`: matriz que contiene la similaridad coseno entre cada par de documentos, lo que se calcula mediante el método `cosine_similarity()`.
+
+### duplicate_words(documents)
+
+```js
+    duplicate_words(documents) {
+        let unique_documents = [];
+        for (let i = 0; i < documents.length; i++) {
+            unique_documents.push(documents[i].filter((value, index) => {
+                return documents[i].indexOf(value) == index;
+            }));
+        }
+        return unique_documents;
+    }
+````
+
+Para eliminar las palabras repetidas que pueden existir en los documentos se emplea este método, por lo que permite obtener una matriz donde las palabras dentro de cada fila son únicas. Esto se consigue recorriendo la matriz original `documents`, y a través de los métodos `filter` y `indexOf` es posible eliminar los duplicados estableciendo la condición que comprueba si el índice de la palabra actual en bucle es la primera ocurrencia en ese documento. Si esto se cumple pues se introduce en la matriz `unique_documents`, en caso contrario no se inserta. Finalmente, se devuelve esta matriz.
 

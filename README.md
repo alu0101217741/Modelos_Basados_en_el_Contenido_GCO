@@ -92,3 +92,37 @@ const recommender = new Recommender(documents);
 
 Para eliminar las palabras repetidas que pueden existir en los documentos se emplea este método, por lo que permite obtener una matriz donde las palabras dentro de cada fila son únicas. Esto se consigue recorriendo la matriz original `documents`, y a través de los métodos `filter` y `indexOf` es posible eliminar los duplicados estableciendo la condición que comprueba si el índice de la palabra actual en bucle es la primera ocurrencia en ese documento. Si esto se cumple pues se introduce en la matriz `unique_documents`, en caso contrario no se inserta. Finalmente, se devuelve esta matriz.
 
+### calculate_tf(documents)
+
+```js
+    calculate_tf(documents) {
+        let matrix_tf = [];
+        let vector_aux = [];
+        let unique_words = [];
+        const frequency = (array, value) => array.reduce((accumulator, current_value) => (current_value === value ? accumulator + 1 : accumulator), 0);
+        for (let i = 0; i < documents.length; i++) {
+            for (let j = 0; j < documents[i].length; j++) {
+                if (!unique_words.includes(documents[i][j])) {
+                    vector_aux.push(frequency(documents[i], documents[i][j]));
+                    unique_words.push(documents[i][j]);
+                }
+            }
+            matrix_tf.push(vector_aux);
+            vector_aux = [];
+            unique_words = [];
+        }
+        return matrix_tf;
+    }
+```
+
+Este método calcula los valores TF para la matriz de documentos, estos valores indican la frecuencia de los términos. Cabe destacar que los términos más importantes son los que aparecen más veces.
+
+En primer lugar, se definen las siguientes variables:
+
+* `matrix_tf`: incluirá la matriz final con los valores TF.
+* `vector_aux`: al recorrer `documents` se utilizará para ir almacenando las diferentes filas con los resultados que se vayan obteniendo. 
+* `unique_words`: vector que se utiliza para evitar repetir el cálculo de la frecuencia en palabras repetidas que ya hayan sido consideradas.
+* `frequency`: constante que mediante el método `reduce`, proporcionado por JavaScript para los arrays, permite contar el número de veces que aparece `value` dentro del `array`, para lo que se recorre el vector comprobando si el elemento que se analiza en ese momento del bucle es igual a `value`, en ese caso se incrementa la variable `accumulator`, en otro caso no se modifica Finalmente, el resultado será el valor que contenga `accumulator`.
+
+
+

@@ -2,12 +2,14 @@
 ## Sistemas de recomendación. Modelos Basados en el Contenido
 ### Autor: Alberto Mendoza Rodríguez (alu0101217741@ull.edu.es)
 
+
 <p align="center">
   <br>
   Acceda al sistema de recomendación: <a href="https://alu0101217741.github.io/Modelos_Basados_en_el_Contenido_GCO/">https://alu0101217741.github.io/Modelos_Basados_en_el_Contenido_GCO/</a>
   <br>
 </p>
 
+***
 
 ## 1. Introducción
 
@@ -40,7 +42,28 @@ Permite obtener el fichero que ha introducido el usuario a través del formulari
 ```js
 document.getElementById('read_button').addEventListener('click', function() {
 ```
-De esta forma cuando se pulse el botón se comprueba que el usuario ha introducido un fichero, tras ello se procesa, para lo que se toma el nombre del archivo y se crea un objeto de la clase `FileReader()`. Luego se lee como un fichero de texto mediante `reader.readAsText(file);` y se emplean dos nuevos eventos sobre el objeto `reader`. El primero es `load` que se ejecuta cuando  ha finalizado correctamente la lectura del fichero. El otro es `error` que se ejecuta si ha ocurrido algún error en la lectura del fichero para informar al usuario.
+De esta forma cuando se pulse el botón se comprueba que el usuario ha introducido un fichero, tras ello se procesa, para lo que se toma el nombre del archivo y se crea un objeto de la clase `FileReader()`. 
+
+```js
+   if(document.getElementById("file-input").files.length == 0) {
+        alert('ERROR: No ha introducido ningún fichero.');
+		return;
+	}
+
+    let file = document.getElementById("file-input").files[0];
+
+    let reader = new FileReader();
+```
+
+Luego se lee como un fichero de texto mediante `reader.readAsText(file);` y se emplean dos nuevos eventos sobre el objeto `reader`. El primero es `load` que se ejecuta cuando  ha finalizado correctamente la lectura del fichero. El otro es `error` que se ejecuta si ha ocurrido algún error en la lectura del fichero para informar al usuario.
+
+```js
+reader.addEventListener('load', function(e) {
+```
+
+```js
+reader.addEventListener('error', function() {
+```
 
 Dentro del evento `load` se obtienen los datos leídos del fichero y se tranforman para crear una matriz `documents` donde cada fila representa un documento y contiene las palabras que lo forman.
 
@@ -51,6 +74,10 @@ const recommender = new Recommender(documents);
  ```
  
  Por último, se llaman a los métodos de la clase `Recommender` para obtener los resultados y se muestran en la página web empleando las funciones `show_result`, `show_table_similarity` y `show_table` que incorporan código HTML.
+ 
+ ```js
+  document.getElementById("result").innerHTML = show_result(recommender.get_documents(), recommender.get_tf(), recommender.get_idf(), recommender.get_tf_idf(), recommender.get_cosine_similarity());
+  ```
  
   ### 3.3. recommender.js
   
@@ -124,5 +151,77 @@ En primer lugar, se definen las siguientes variables:
 * `unique_words`: vector que se utiliza para evitar repetir el cálculo de la frecuencia en palabras repetidas que ya hayan sido consideradas.
 * `frequency`: constante que mediante el método `reduce`, proporcionado por JavaScript para los arrays, permite contar el número de veces que aparece `value` dentro del `array`, para lo que se recorre el vector comprobando si el elemento que se analiza en ese momento del bucle es igual a `value`, en ese caso se incrementa la variable `accumulator`, en otro caso no se modifica Finalmente, el resultado será el valor que contenga `accumulator`.
 
+Tras ello, se  realizan dos bucles `for` para recorrer la matriz `documents`, dentro del bucle se incluye la condición `if (!unique_words.includes(documents[i][j]))` que permite comprobar si la palabra ya esta incluida en el vector `unique_words`, lo que significaría que se trata de una palabra repetida y que por tanto ya ha sido calculada su frecuencia. En caso de que no se encuentre en el vector, se llama a `frequency` pasándole el documento y la palabra correspondiente, y el resultado que se obtenga se almacena en `vector_aux`, también se inserta la palabra en `unique_words`. 
+
+Cuando ya se ha recorrido por completo un documento, sus valores TF se encuentran almacenados en `vector_aux` por lo que se hace un push de este vector sobre `matrix_tf`, y después se vacían los dos vectores para continuar con el siguiente documento.
+
+Finalmente, se devuelve `matrix_tf` que contiene los valores TF para cada uno de los documentos.
+
+### calculate_idf()
+
+```js
+    calculate_idf() {
+        let matrix_idf = [];
+        let vector_aux = [];
+        let total_documents = this.documents.length;
+        for (let i = 0; i < this.documents.length; i++) {
+            for (let j = 0; j < this.documents[i].length; j++) {
+                vector_aux.push(Math.log10(total_documents / this.word_occurrences(this.documents[i][j])));
+            }
+            matrix_idf.push(vector_aux);
+            vector_aux = [];
+        }
+        return matrix_idf;
+    }
+```
+
+Este método permita calcular los valores IDF o frecuencia inversa para cada una de las palabras que forman los distintos documentos. Para ello se aplica la formula `IDF = log N/dfx`, donde:
+
+* **N:** número total de documentos que pueden ser recomendados.
+* **dfx:** número de documentos en N donde aparece la palabra clave x.
+
+En el código primero se define `total_documents` que contendrá el número total de documentos, por lo que representará a **N**. Después se recorre cada una de las palabras de los distintos documentos aplicando a cada una de ellas la fórmula anterior, el resultado obtenido se introduce en `vector_aux`. Como se puede observar para realizar la fórmula y contar el número de documentos en los que aparece la palabra clave que se está analizando se llama al método `word_occurrences()` que se explicará posteriormente.
+
+Cuando se ha terminado con un documento el conjunto de sus valores IDF se encuentran en `vector_aux`, por tanto se insertan en `matrix_idf`. Es esta variable la que finalmente se devuelve y que contiene la matriz con los valores IDF para las palabras de cada uno de los documentos.
+
+### word_occurrences(word)
+
+```js
+    word_occurrences(word) {
+        let k = 0;
+        let accumulator = 0;
+        while (k < this.documents.length) {
+            if (this.documents[k].includes(word))
+                accumulator++;
+            k++;
+        }
+        return accumulator;
+    }
+```
+
+Este método es llamado desde `calculate_idf()` para contar el número de documentos en los que aparece una determinada palabra. Para ello se recorren los documentos que forman la matriz `documents`, al estar almacenados como vectores es posible aplicar sobre cada uno de ellos el método `includes()`, que determina  si el array contiene el valor buscado y devuelve true o false según sea el caso. Si se obtiene que la palabra está en el documento, se incrementa el acumulador. Por último, se devuelve el valor de este acumulador.
+
+### calculate_tf_idf()
+
+```js
+    calculate_tf_idf() {
+        let matrix_tf_idf = [];
+        let vector_aux = [];
+        for (let i = 0; i < this.documents.length; i++) {
+            for (let j = 0; j < this.documents[i].length; j++) {
+                vector_aux.push(this.tf[i][j] * this.idf[i][j]);
+            }
+            matrix_tf_idf.push(vector_aux);
+            vector_aux = [];
+        }
+        return matrix_tf_idf;
+    }
+````
+
+Los cálculos de **TF - IDF** para las palabras que componen los documentos consisten en la multiplicación de los valores **TF** e **IDF** que se hayan obtenido para esas palabras. 
+
+Por ello, se recorre la matriz `documents` para obtener los índices que ocupan las distintas palabras, y así poder obtener para cada una de ellas sus valores TF e IDF para multiplicarlos y almacenarlos en `vector_aux`.
+
+Una vez se ha terminado con un documento, se almacena el conjunto de resultados TF - IDF en la variable `matrix_tf_idf`, que cuando finalizan los dos bucles es la que se devuelve.
 
 

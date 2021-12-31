@@ -321,7 +321,7 @@ Cuando el usuario termina de introducir el archivo debe pulsar el botón **ANALI
 A través de la siguiente animación se muestra un ejemplo de uso del programa:
 
 <p align="center">
- <a href="https://github.com/alu0101217741/Modelos_Basados_en_el_Contenido_GCO/blob/main/img/animacion.gif">
-  <img src="./img/animacion.gif" style="max-width:100%; width: 150%">
+ <a href="https://github.com/alu0101217741/Modelos_Basados_en_el_Contenido_GCO/blob/main/img/animacion_programa.gif">
+  <img src="./img/animacion_programa.gif" style="max-width:100%; width: 150%">
  </a>
 </p>

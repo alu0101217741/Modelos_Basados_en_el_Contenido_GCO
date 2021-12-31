@@ -149,7 +149,7 @@ En primer lugar, se definen las siguientes variables:
 * `matrix_tf`: incluirá la matriz final con los valores TF.
 * `vector_aux`: al recorrer `documents` se utilizará para ir almacenando las diferentes filas con los resultados que se vayan obteniendo. 
 * `unique_words`: vector que se utiliza para evitar repetir el cálculo de la frecuencia en palabras repetidas que ya hayan sido consideradas.
-* `frequency`: constante que mediante el método `reduce`, proporcionado por JavaScript para los arrays, permite contar el número de veces que aparece `value` dentro del `array`, para lo que se recorre el vector comprobando si el elemento que se analiza en ese momento del bucle es igual a `value`, en ese caso se incrementa la variable `accumulator`, en otro caso no se modifica Finalmente, el resultado será el valor que contenga `accumulator`.
+* `frequency`: constante que mediante el método `reduce`, proporcionado por JavaScript para los arrays, permite contar el número de veces que aparece `value` dentro del `array`, para lo que se recorre el vector comprobando si el elemento que se analiza en ese momento del bucle es igual a `value`, en ese caso se incrementa la variable `accumulator` (su valor inicial es 0), en otro caso no se modifica Finalmente, el resultado será el valor que contenga `accumulator`.
 
 Tras ello, se  realizan dos bucles `for` para recorrer la matriz `documents`, dentro del bucle se incluye la condición `if (!unique_words.includes(documents[i][j]))` que permite comprobar si la palabra ya esta incluida en el vector `unique_words`, lo que significaría que se trata de una palabra repetida y que por tanto ya ha sido calculada su frecuencia. En caso de que no se encuentre en el vector, se llama a `frequency` pasándole el documento y la palabra correspondiente, y el resultado que se obtenga se almacena en `vector_aux`, también se inserta la palabra en `unique_words`. 
 
@@ -218,10 +218,106 @@ Este método es llamado desde `calculate_idf()` para contar el número de docume
     }
 ````
 
-Los cálculos de **TF - IDF** para las palabras que componen los documentos consisten en la multiplicación de los valores **TF** e **IDF** que se hayan obtenido para esas palabras. 
+Los cálculos de **TF - IDF** para las palabras que componen los documentos consisten en la multiplicación de los valores **TF** e **IDF** que se hayan obtenido para esas palabras. De esta forma para una palabra clave x, se tendrá que aplicar la siguiente fórmula `TF-IDF(x) = TF(x) * IDF(x)`. 
 
-Por ello, se recorre la matriz `documents` para obtener los índices que ocupan las distintas palabras, y así poder obtener para cada una de ellas sus valores TF e IDF para multiplicarlos y almacenarlos en `vector_aux`.
+Por ello, se recorre la matriz `documents` para obtener los índices que ocupan las distintas palabras, y así poder obtener para cada una de ellas sus valores TF e IDF que se multiplican y se almacenan en `vector_aux`.
 
 Una vez se ha terminado con un documento, se almacena el conjunto de resultados TF - IDF en la variable `matrix_tf_idf`, que cuando finalizan los dos bucles es la que se devuelve.
 
 
+### normalize_tf()
+
+```js
+    normalize_tf() {
+        let normalized_tf = [];
+        let vector_aux = [];
+        let vector_length;
+        const sum_squared = array => array.reduce((accumulator, current_value) => (accumulator + Math.pow(current_value, 2)), 0);
+        for (let i = 0; i < this.tf.length; i++) {
+            vector_length = Math.sqrt(sum_squared(this.tf[i]));
+            for (let j = 0; j < this.tf[i].length; j++) {
+                vector_aux.push(this.tf[i][j] / vector_length);
+            }
+            normalized_tf.push(vector_aux);
+            vector_aux = [];
+        }
+        return normalized_tf;
+    }
+```
+
+Este método permite normalizar los valores del atributo `this.tf` que contiene la frecuencia de las palabras en cada documento. Esto consiste en obtener la longitud del documento realizando la raíz cuadrada de la suma de los valores TF al cuadrado para cada palabra, y finalmente se obtiene la normalización dividiendo todos los valores TF de ese documento entre la longitud calculada anteriormente. Este proceso de normalización será necesario para calcular la similitud entre cada par de documentos.
+
+Para ello primero se definen las siguientes variables:
+
+* **normalized_tf:** se trata de una matriz con las mismas dimensiones que el atributo `this.tf` pero que contendrá los valores normalizados.
+* **vector_aux:** al recorrer `this.tf` se utilizará para ir almacenando los valores normalizados que se vayan obteniendo para una determinada fila.
+* **vector_length:** contendrá la longitud de cada uno de los documentos.
+* **sum_squared:** constante que mediante el método `reduce` realiza la suma al cuadrado de todos los valores de un vector, de esta forma se recorre el vector `array` y se va almacenando en `accumulator` (su valor inicial es 0) la suma al cuadrado de cada uno de los elementos. Finalmente se devolverá el valor que contiene `accumulator`.
+
+Después se recorre el atributo `this.tf`, dentro del primer bucle se va obteniendo la longitud de los documentos realizando la raíz cuadrada al valor que devuelva `sum_squared` tras pasarle los valores TF del documento correspondiente. Tras ello, en el segundo bucle se dividen los valores TF de ese documento entre su longitud, y el resultado se almacena en `vector_aux`.
+
+Cuando se finaliza con un documento completo, se insertan todos su valores normalizados en `normalized_tf`, el contenido de esta variable es lo que devuelve finalmente el método.
+
+### cosine_similarity()
+
+```js
+    cosine_similarity() {
+        let normalized_tf = this.normalize_tf();
+        let cosine_similarity = [];
+        let vector_aux = [];
+        let similarity;
+        for (let i = 0; i < this.documents.length; i++) {
+            for (let j = 0; j < this.documents.length; j++) {
+                similarity = 0;
+                for (let k = 0; k < this.documents[i].length; k++) {
+                    if (this.documents[j].includes(this.documents[i][k])) {
+                        let index_document2 = this.documents[j].indexOf(this.documents[i][k]);
+                        similarity += normalized_tf[i][k] * normalized_tf[j][index_document2];
+                    }
+                }
+                vector_aux.push(similarity);
+            }
+            cosine_similarity.push(vector_aux);
+            vector_aux = [];
+        }
+        return cosine_similarity;
+    }
+```
+
+Este método calcula la similitud coseno entre cada par de documentos. Para ello se toman dos documentos, y se van analizando cada uno de los términos del primer documento para comprobar si se encuentra ese término en el segundo documento. Si esto se cumple, hay que multiplicar el valor TF que tenga el término en el primer documento por el valor TF de ese mismo término en el segundo documento. Los resultados que se obtengan de estas multiplicaciones se acumulan hasta que se hayan recorrido todas las palabras del primer documento. En ese momento, el acumulador indicará la similitud entre este par de documentos.
+
+En el código primero calculamos los valores TF normalizados llamando al método `this.normalize_tf()` y almacenando su resultado en `normalized_tf`. Ahora como la similitud es entre cada par de documentos son necesarios tres bucles `for`, el primero para fijar el documento i que se va a analizar, el segundo para ir cambiando entre el resto de documentos y establecer el documento j con el que se va a comparar,  y el último para recorrer todas las palabras del documento i para revisar si se encuentran en el documento j.
+
+El acumulador que contendrá la similitud entre el par de documentos será `similarity` que se establece a 0 dentro del segundo bucle, después de eso comienza el tercer bucle donde se comprueba con el método `includes()` si una determinada palabra del documento i se encuentra en el documento j. Si esto es así, se obtiene mediante `indexOf` la posición que ocupa esa palabra dentro del documento j. Esto permite multiplicar el valor TF normalizado de ese término en el primer documento por su valor TF en el segundo documento, esto se almacena en `similarity`.
+
+Cuando se termina de recorrer todas las palabras de un documento se almacena el valor de `similarity` en `vector_aux`, y tras comparar un documento con todos los demás (segundo bucle) se insertan los resultados contenidos en `vector_aux` en la matriz `cosine_similarity` que será finalmente la que se devuelva.
+
+## 4. Intrucciones para utilizar el sistema
+
+El sistema de recomendación esta disponible accediendo al siguiente enlace:
+
+<p align="center">
+  <a href="https://alu0101217741.github.io/Modelos_Basados_en_el_Contenido_GCO/">https://alu0101217741.github.io/Modelos_Basados_en_el_Contenido_GCO/</a>
+</p>
+
+Una vez que se haya accedido se mostrará la siguiente página web:
+
+![Formulario](img/formulario.png)
+
+Como se puede observar se tiene que introducir el archivo de texto que se desea analizar y que debe contener en cada fila un documento.
+
+Cuando el usuario termina de introducir el archivo debe pulsar el botón **ANALIZAR CONTENIDO** y se mostrará lo siguiente:
+
+* Para cada documento, una tabla con las siguientes columnas:
+	* Índice del término.
+	* Término.
+	* TF.
+	* IDF.
+	* TF-IDF.
+* Tabla que muestra la similaridad coseno entre cada par de documentos.
+
+## 5. Ejemplo de uso
+
+A través de la siguiente animación se muestra un ejemplo de uso del programa:
+
+![Ejemplo_de_uso](img/animacion.gif)
